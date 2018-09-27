@@ -1,12 +1,36 @@
 /*
  * Create a list that holds all of your cards
  */
-var cardList = $('li.card > i');
+var cardLists = ["fa-diamond", "fa-paper-plane-o", "fa-anchor", "fa-bolt", "fa-cube", "fa-leaf", "fa-bicycle", "fa-bomb"];
+// to store number of moves and matches found
+var moves = 0;
+var match_found = 0;
 
+// check when first card is opened
+var game_started = false;
+
+// timer object
+var timer = new Timer();
+timer.addEventListener('secondsUpdated', function (e) {                   $('#timer').html(timer.getTimeValues().toString());
+});
+
+// reference to reset button
+$('#reset-button').click(resetGame);
+// create and append card html
+function createCard(card) {
+    $('#deck').append(`<li class="card animated"><i class="fa ${card}"></i></li>`);
+}
+// generate random cards on the deck
+function generateCards() {
+    for (var i = 0; i < 2; i++) {
+        cardLists = shuffle(cardLists);
+        cardLists.forEach(createCard);
+    }
+}
 // Shuffle function from http://stackoverflow.com/a/2450976
 function shuffle(array) {
-    var currentIndex = array.length, temporaryValue, randomIndex;
-
+    var currentIndex = array.length
+        , temporaryValue, randomIndex;
     while (currentIndex !== 0) {
         randomIndex = Math.floor(Math.random() * currentIndex);
         currentIndex -= 1;
@@ -14,194 +38,158 @@ function shuffle(array) {
         array[currentIndex] = array[randomIndex];
         array[randomIndex] = temporaryValue;
     }
-
     return array;
 }
+// Array to keep track of open cards
+openCards = [];
 
-/*Functions that shuffles the cards and adds to the HTML back */
-function shuffle_cards(){
-    var i = 0;
-    var j = 0;
-    var temporary_cardList = cardList.slice();
-    shuffle(temporary_cardList);
-    var values = [];
-    while(i<16){
-        values.push($(temporary_cardList[i]).attr('class').split(' ')[1]);
-        ++i;
+// card functionality
+function toggleCard() {
+    
+    // start the timer when first card is opened
+    if (game_started == false) {
+        game_started = true;
+        timer.start();
     }
-
-    $(cardList).each(function(){
-        oldName = $(this).attr('class').split(' ')[1];
-        var name = oldName+' '+values[j];
-        $(this).toggleClass(name);
-        ++j;
+    
+    if (openCards.length === 0) {
+        $(this).toggleClass("show open").animateCss('flipInY');
+        openCards.push($(this));
+        disableCLick();
+    }
+    else if (openCards.length === 1) {
+        // increment moves
+        updateMoves();
+        $(this).toggleClass("show open").animateCss('flipInY');
+        openCards.push($(this));
+        setTimeout(matchOpenCards, 1100);
+    }
+}
+// Disable click of the open Cards
+function disableCLick() {
+    openCards.forEach(function (card) {
+        card.off('click');
     });
-    return;
 }
-
-shuffle_cards();
-
-var no_of_stars = 3;
-var wrong_moves = 0;
-var moves = 0;
-var open = [];
-var matched = [];
-var sec = 0;
-var min = 0;
-var flag = false;
-
-/*Function to get the value or the name of the card*/
-function child_value(element) {
-    return $(element).children().attr('class').split(' ')[1];
+// enable click on the open card
+function enableClick() {
+    openCards[0].click(toggleCard);
 }
-
-/*Function to restart the whole game, with moves , cards and stars reset*/
-function restart_game(){
-    no_of_stars = 3;
-    wrong_moves = 0;
+// check openCards if they match or not
+function matchOpenCards() {
+    if (openCards[0][0].firstChild.className == openCards[1][0].firstChild.className) {
+        console.log("matchCard");
+        openCards[0].addClass("match").animateCss('pulse');
+        openCards[1].addClass("match").animateCss('pulse');
+        disableCLick();
+        removeOpenCards();
+        setTimeout(checkWin, 1000);
+    }
+    else {
+        openCards[0].toggleClass("show open").animateCss('flipInY');
+        openCards[1].toggleClass("show open").animateCss('flipInY');
+        enableClick();
+        removeOpenCards();
+    }
+}
+// function to remove openCards
+function removeOpenCards() {
+    openCards = [];
+}
+// function to add animations
+$.fn.extend({
+    animateCss: function (animationName) {
+        var animationEnd = 'webkitAnimationEnd mozAnimationEnd MSAnimationEnd oanimationend animationend';
+        this.addClass(animationName).one(animationEnd, function () {
+            $(this).removeClass(animationName);
+        });
+        return this;
+    }
+});
+// update moves
+function updateMoves() {
+    moves += 1;
+    $('#moves').html(`${moves} Moves`);
+    if (moves == 24) {
+        addBlankStar();
+    }
+    else if (moves == 15) {
+        addBlankStar();
+    }
+}
+// check whether the game is finished or not 
+function checkWin() {
+    match_found += 1;
+    if (match_found == 8) {
+        showResults();
+    }
+}
+// add blank stars
+function addBlankStar() {
+    $('#stars').children()[0].remove();
+    $('#stars').append('<li><i class="fa fa-star-o"></i></li>');
+}
+// add initial stars
+function addStars() {
+    for (var i = 0; i < 3; i++) {
+        $('#stars').append('<li><i class="fa fa-star"></i></li>');
+    }
+}
+// reset the game
+function resetGame() {
     moves = 0;
-    open = [];
-    matched = [];
-    $('.moves').text(moves);
-    $('.card').removeClass(" open show match");
-    reset_star = $( 'ul.stars > li');
-    $(reset_star).each(function(){
-        reset_star_child = $(this).children();
-        if($(reset_star_child).hasClass('fa fa-star-o')){
-            $(reset_star_child).toggleClass('fa-star fa-star-o');
-        }
-    });
-    shuffle_cards();
-    return;
+    match_found = 0;
+    $('#deck').empty();
+    $('#stars').empty();
+    $('#game-deck')[0].style.display = "";
+    $('#sucess-result')[0].style.display = "none";
+    game_started=false;
+    timer.stop();
+    $('#timer').html("00:00:00");
+    playGame();
+}
+// Init function
+function playGame() {
+    generateCards();
+    $('.card').click(toggleCard);
+    $('#moves').html("0 Moves");
+    addStars(3);
+}
+// shows result on end game
+function showResults() {
+    $('#sucess-result').empty();
+    timer.pause();
+    var scoreBoard = `
+        <svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 130.2 130.2">
+            <circle class="path circle" fill="none" stroke="#73AF55" stroke-width="6" stroke-miterlimit="10" cx="65.1" cy="65.1" r="62.1" />
+            <polyline class="path check" fill="none" stroke="#73AF55" stroke-width="6" stroke-linecap="round" stroke-miterlimit="10" points="100.2,40.2 51.5,88.8 29.8,67.5 " /> </svg>
+        <p class="success"> Congrats !!! </p>
+        <p>
+            <span class="score-titles">Moves:</span>
+            <span class="score-values">${moves}</span>
+            <span class="score-titles">Time:</span>
+            <span class="score-values">${timer.getTimeValues().toString()}</span>
+        </p>
+        <div class="text-center margin-top-2">
+             <div class="star">
+                <i class="fa fa-star fa-3x"></i>    
+             </div>
+             <div class="star">
+                <i class="fa ${ (moves > 23) ? "fa-star-o" : "fa-star"}  fa-3x"></i>    
+             </div>
+            <div class="star">
+                <i class="fa ${ (moves > 14) ? "fa-star-o" : "fa-star"} fa-3x"></i>    
+             </div>
+        </div>
+        <div class="text-center margin-top-2" id="restart">
+            <i class="fa fa-repeat fa-2x"></i>
+          </div>
+    `;
+    $('#game-deck')[0].style.display = "none";
+    $('#sucess-result')[0].style.display = "block";
+    $('#sucess-result').append($(scoreBoard));
+    $('#restart').click(resetGame);
 }
 
-/*Function to print the end result of the page based on won or lost passed as the parameter*/
-function display_result(result){
-    $('.container').hide();
-    if(result === 'won'){
-        $('.result-icon').children().removeClass(' fa-times-circle-o').toggleClass(' fa-check-circle-o').css('color', '#66ff66');
-        $('.result-header').text('Congratulations..!!');
-        $('.result-message').text('You have won this game succesfully with '+no_of_stars+
-            ' stars and '+moves+' moves in '+min+' minutes '+sec+' seconds.');
-    } else if(result === 'lost'){
-        $('.result-icon').children().removeClass(' fa-check-circle-o').toggleClass(' fa-times-circle-o').css('color', '#ff1a1a');
-        $('.result-header').text('You Lost..!!');
-        $('.result-message').text('You lost this game by losing all stars ');
-
-    }
-    $( "button" ).on('click',function(){
-        restart_game();
-        stopclock();
-        $('.container').show();
-        $('.result').hide();
-    });
-    $('.result').show();
-    return;
-}
-
-/*Function to open the card and display*/
-function open_card(card){
-    $(open_element).effect( "shake" ).toggleClass( " match");
-    $(card).effect( "shake" ).toggleClass( " match");
-    matched.push(card);
-    matched.push(open_element);
-    moves += 1;
-    return;
-}
-
-/*Function to close the card and hide its display*/
-function close_card(card){
-    $(open_element).effect( "shake" , {direction:'up'}).toggleClass( " wrong");
-    $(card).effect( "shake" , {direction:'up'}).toggleClass( " wrong");
-    moves += 1;
-    wrong_moves += 1;
-    obj = $(card);
-    setTimeout($.proxy(function(){
-        $(open_element).toggleClass( " open show wrong");
-        $(obj).toggleClass( " open show wrong");
-    }), 1000);
-    reduce_stars();
-    return;
-}
-
-/*Function to reduce the number of stars based on the number of wrong moves*/
-function reduce_stars(){
-    switch(wrong_moves){
-        case 4:
-        case 12:
-        case 20:no_of_stars -= 1;
-                star_obj = $(stars[no_of_stars]).children();
-                $(star_obj).toggleClass(" fa-star fa-star-o");
-                if(no_of_stars === 0){
-                    display_result('lost');
-                }
-                 break;
-    }
-    return;
-}
-
-/*Function to run the timer with secs and minutes*/
-function stopclock(){
-    sec = 0;
-    min = 0;
-    setInterval(function(){
-        ++sec;
-        if(sec>60){
-            sec = 0;
-            ++min;
-        }
-        time = min + ':' + sec;
-        $('.time').text(time);
-    },1000);
-    return;
-}
-
-stars = $('.stars').children();
-$('.deck').hide();
-$('.result').hide();
-
-/*Starts the game for the user*/
-$('.start').on('click',function(){
-    $('.start').hide();
-    $('.deck').show();
-    stopclock();
-    flag = true;
-});
-
-/*Restarts the game if either restart is pressed or if the user wants to play one more game*/
-$('.restart').on('click', function(){
-    restart_game();
-    if(flag){
-           stopclock();
-    }
-});
-
-$('.card').on('click',function(){
-    if(!matched.includes(this)){
-        $(this).toggleClass( "open show");
-        value = child_value(this);
-        if(open.length === 0){
-            open.push(this);
-        }
-        else
-        {
-            open_element = open.pop();
-            current_card = $(this);
-            ((child_value(open_element) === value)?(open_card(current_card)):(close_card(current_card)));
-            $('.moves').text(moves);
-            if(matched.length === 16){
-                display_result('won');
-            }
-        }
-    }
-});
-/*
- * set up the event listener for a card. If a card is clicked:
- *  - display the card's symbol (put this functionality in another function that you call from this one)
- *  - add the card to a *list* of "open" cards (put this functionality in another function that you call from this one)
- *  - if the list already has another card, check to see if the two cards match
- *    + if the cards do match, lock the cards in the open position (put this functionality in another function that you call from this one)
- *    + if the cards do not match, remove the cards from the list and hide the card's symbol (put this functionality in another function that you call from this one)
- *    + increment the move counter and display it on the page (put this functionality in another function that you call from this one)
- *    + if all cards have matched, display a message with the final score (put this functionality in another function that you call from this one)
- */
+// start the game
+playGame();
