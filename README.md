@@ -1,11 +1,24 @@
 
 
-# Memory Game
- An Interactive matching game with deck of cards, where you are supposed to memorize the position of cards and match two same cards.
-## How To Play
+# Memory-Game
 
-Once the game is open the timer will start. A move is counted each time two cards are opened. 
-If the cards match they will stay visible and turn blue. If the cards do not match, they will flash orange and flip back over. 
-Stars are lost after a specific number of moves and aren't lost from time. The game is won when all cards are matched, you will then 
-see a pop up with your final move count, time and stars.Get fewest number of moves and have loads of fun.
+This is a complete browser-based card memory game.
 
+#### In Each turn:
+
+* The player flips one card over to reveal its underlying symbol.
+* The player then turns over a second card, trying to find the corresponding card with the same symbol.
+* If the cards match, both cards stay flipped over.
+* If the cards do not match, both cards are flipped face down.
+* The game ends once all cards have been correctly matched.
+
+## Installing
+    * You can clone the project from
+        * https://github.com/vivekbasavaraj/Udacity-Memory-Game.git
+    * You can run the index.html file directly from the directory or using command line.
+
+## Dependencies 
+project developed using HTMl, CSS, JavaScript and jQuery.
+
+## Acknowledgments
+    * Udacity's starter code was used for UI design.
