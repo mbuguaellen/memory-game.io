@@ -11,7 +11,8 @@ var game_started = false;
 
 // timer object
 var timer = new Timer();
-timer.addEventListener('secondsUpdated', function (e) {                   $('#timer').html(timer.getTimeValues().toString());
+timer.addEventListener('secondsUpdated', function (e) {                   
+    $('#timer').html(timer.getTimeValues().toString());
 });
 
 // reference to reset button
