@@ -13,7 +13,7 @@ This is a complete browser-based card memory game.
 * The game ends once all cards have been correctly matched.
 
 ## Installing
-    * You can clone the project from
+    * To get the project
         * https://github.com/mbuguaellen/memory-game.io
     * You can run the index.html file directly from the directory or using command line.
 
